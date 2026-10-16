@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Abismo do Tempo — Explorador de Vida Marinha & Eras Geológicas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Background Canvas for Bubbles, Marine Snow & Bioluminescence -->
+  <canvas id="ocean-canvas"></canvas>
+
+  <!-- Top Minimalist Navigation Bar (Single 50px bar) -->
+  <header class="top-hud">
+    <div class="brand">
+      <div class="brand-logo" aria-hidden="true">
+        <svg viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="2" stroke-dasharray="4 2"/>
+          <path d="M8 22C13 16 18 16 22 20C26 24 30 22 33 17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="26" cy="14" r="2" fill="currentColor"/>
+        </svg>
+      </div>
+      <h1 class="brand-title">ABISMO DO TEMPO</h1>
+    </div>
+
+    <!-- Era Compact Segmented Pill -->
+    <nav class="era-selector" aria-label="Seletor de Época Geológica" id="era-selector">
+      <!-- Populated by JS -->
+    </nav>
+
+    <!-- Right Quick Controls -->
+    <div class="hud-actions">
+      <button id="btn-era-info" class="hud-btn" title="Dados Geológicos e Climáticos da Época" aria-expanded="false">
+        <span class="btn-icon">ⓘ</span> <span class="btn-text">Info da Época</span>
+      </button>
+      <button id="btn-dive-auto" class="hud-btn" title="Mergulho Automático Guiado">
+        <span class="btn-icon" id="dive-icon">▼</span> <span class="btn-text">Mergulho</span>
+      </button>
+      <button id="btn-sound" class="hud-btn hud-icon-only" title="Ativar/Desativar Som Submarino" aria-pressed="false">
+        <span class="btn-icon" id="sound-icon">🔇</span>
+      </button>
+    </div>
+
+    <!-- Retractable Era Info Popover -->
+    <div class="era-popover" id="era-popover" aria-hidden="true">
+      <div class="popover-header">
+        <span class="popover-badge" id="popover-badge">0 Ma — Presente</span>
+        <button class="popover-close" id="popover-close" aria-label="Fechar">✕</button>
+      </div>
+      <p class="popover-summary" id="popover-summary">Resumo da época...</p>
+      <div class="popover-stats">
+        <div class="popover-stat">
+          <span class="p-stat-lbl">Nível do Mar</span>
+          <span class="p-stat-val" id="popover-sealevel">Atual (0m)</span>
+        </div>
+        <div class="popover-stat">
+          <span class="p-stat-lbl">Temp. Superfície</span>
+          <span class="p-stat-val" id="popover-temp">17 °C</span>
+        </div>
+        <div class="popover-stat">
+          <span class="p-stat-lbl">Oxigênio (O₂)</span>
+          <span class="p-stat-val" id="popover-o2">21%</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Left Fixed Depth Meter & Zone Quick-Jump -->
+  <aside class="depth-sidebar" aria-label="Medidor de Profundidade">
+    <div class="telemetry-box">
+      <div class="telemetry-depth">
+        <span class="telemetry-label">PROFUNDIDADE</span>
+        <span class="telemetry-value" id="current-depth">0m</span>
+      </div>
+      <div class="telemetry-grid">
+        <div class="telemetry-item">
+          <span class="t-label">PRESSÃO</span>
+          <span class="t-val" id="current-pressure">1 atm</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="t-label">LUZ SOLAR</span>
+          <span class="t-val" id="current-light">100%</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="t-label">TEMP. LOCAL</span>
+          <span class="t-val" id="current-water-temp">22.0°C</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="depth-track-container">
+      <div class="depth-track-line">
+        <div class="depth-progress" id="depth-progress"></div>
+        <div class="submarine-marker" id="sub-marker" title="Sua posição atual">
+          <span class="sub-pulse"></span>
+        </div>
+      </div>
+      <ul class="zone-nav-list" id="zone-nav-list">
+        <!-- Populated by JS -->
+      </ul>
+    </div>
+  </aside>
+
+  <!-- Main Ocean Column (Scrollable from Surface to 11,000m) -->
+  <main class="ocean-column" id="ocean-column">
+    <!-- Sky / Surface Hero Section -->
+    <section class="surface-hero" id="surface-top">
+      <div class="sun-rays" id="sun-rays"></div>
+      <div class="hero-content">
+        <span class="hero-kicker" id="hero-kicker">EXPLORAÇÃO OCEÂNICA INTERATIVA</span>
+        <h2 class="hero-title" id="hero-title">Oceano Moderno (Holoceno)</h2>
+        <p class="hero-desc" id="hero-desc">
+          Role para baixo para submergir das águas rasas iluminadas pelo sol até as fossas abissais a 11.000 metros de profundidade — ou viaje no tempo na barra superior para testemunhar os monstros e pioneiros dos oceanos pré-históricos.
+        </p>
+
+        <!-- Contexto Climático da Época Integrado ao Hero -->
+        <div class="hero-era-stats">
+          <div class="hero-stat-card">
+            <span class="hero-stat-icon">🌊</span>
+            <div class="hero-stat-texts">
+              <span class="hero-stat-lbl">Nível do Mar</span>
+              <strong class="hero-stat-val" id="hero-sealevel">Atual (0m)</strong>
+            </div>
+          </div>
+          <div class="hero-stat-card">
+            <span class="hero-stat-icon">🌡</span>
+            <div class="hero-stat-texts">
+              <span class="hero-stat-lbl">Temp. Superfície</span>
+              <strong class="hero-stat-val" id="hero-temp">17 °C</strong>
+            </div>
+          </div>
+          <div class="hero-stat-card">
+            <span class="hero-stat-icon">💨</span>
+            <div class="hero-stat-texts">
+              <span class="hero-stat-lbl">Oxigênio (O₂)</span>
+              <strong class="hero-stat-val" id="hero-o2">21%</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-controls">
+          <a href="#zone-epipelagic" class="cta-dive-btn">
+            <span>Iniciar Submersão</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 5v14M19 12l-7 7-7-7"/>
+            </svg>
+          </a>
+          <div class="filter-bar">
+            <label for="diet-filter" class="filter-label">Filtrar por Dieta:</label>
+            <select id="diet-filter" class="filter-select">
+              <option value="all">Todas as Espécies</option>
+              <option value="Predador Ápice">Predadores de Topo</option>
+              <option value="Carnívoro">Carnívoros / Caçadores</option>
+              <option value="Filtrador">Filtradores / Plâncton</option>
+              <option value="Detritívoro">Detritívoros / Necrófagos</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Animated Waves Separator -->
+      <div class="waves-container" aria-hidden="true">
+        <svg class="waves" xmlns="http://www.w3.org/2000/svg" viewBox="0 24 150 28" preserveAspectRatio="none">
+          <defs>
+            <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
+          </defs>
+          <g class="wave-parallax">
+            <use href="#gentle-wave" x="48" y="0" fill="rgba(14, 165, 233, 0.35)" />
+            <use href="#gentle-wave" x="48" y="3" fill="rgba(2, 132, 199, 0.55)" />
+            <use href="#gentle-wave" x="48" y="6" fill="rgba(3, 105, 161, 0.85)" />
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <!-- Dynamic Ocean Zones Container -->
+    <div id="zones-container" class="zones-container">
+      <!-- Populated dynamically by app.js based on selected Era -->
+    </div>
+
+    <!-- Ocean Floor / Trench Bottom Footer -->
+    <footer class="ocean-floor">
+      <div class="hydrothermal-vents" aria-hidden="true">
+        <div class="vent vent-1"></div>
+        <div class="vent vent-2"></div>
+        <div class="vent vent-3"></div>
+      </div>
+      <div class="floor-content">
+        <span class="floor-depth-tag">11.000 METROS — FUNDO DA FOSSA OCEÂNICA</span>
+        <h3>Você atingiu o leito rochoso do planeta</h3>
+        <p>Mesmo sob pressão esmagadora de mais de 1.100 atmosferas e escuridão perpétua, fontes hidrotermais sustentam ecossistemas quimiossintéticos extraordinários.</p>
+        <div class="floor-buttons">
+          <button id="btn-back-surface" class="cta-surface-btn">▲ Emergir para a Superfície</button>
+          <button id="btn-next-era" class="cta-era-btn">⏳ Viajar para a Próxima Época</button>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <!-- Species Detail Modal -->
+  <div class="modal-backdrop" id="species-modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <button class="modal-close" id="modal-close" aria-label="Fechar detalhes">✕</button>
+      <div class="modal-visual" id="modal-visual">
+        <!-- SVG Illustration + Size Scale Comparison -->
+      </div>
+      <div class="modal-body">
+        <div class="modal-tags" id="modal-tags"></div>
+        <h3 class="modal-title" id="modal-title">Nome da Espécie</h3>
+        <p class="modal-scientific" id="modal-scientific">Nome Científico</p>
+        <p class="modal-description" id="modal-description"></p>
+
+        <div class="modal-metrics" id="modal-metrics"></div>
+
+        <div class="size-comparison-box">
+          <div class="size-header">
+            <span>Comparação de Escala (vs. Mergulhador Humano de 1,80m)</span>
+            <span id="modal-size-ratio"></span>
+          </div>
+          <div class="scale-bars">
+            <div class="scale-row">
+              <span class="scale-name">Humano (1,8m)</span>
+              <div class="scale-track"><div class="scale-fill human-fill" id="scale-human"></div></div>
+            </div>
+            <div class="scale-row">
+              <span class="scale-name" id="scale-creature-name">Criatura</span>
+              <div class="scale-track"><div class="scale-fill creature-fill" id="scale-creature"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-funfact" id="modal-funfact"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
